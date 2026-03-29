@@ -10,14 +10,6 @@ from skimage.metrics import structural_similarity as ssim
 
 
 '''
-Computing params and flops
-'''
-def params_flops(model):
-    flops, params = get_model_complexity_info(model, (1, 160, 192, 160), as_strings=True, print_per_layer_stat=True, verbose=True)
-    return flops, params
-
-
-'''
 Getting roi feature
 '''
 def get_roi_feature(feature_map_s, feature_map_m, template_s, template_m):
@@ -136,19 +128,6 @@ def get_weight_edge(adjacency_matrix):
     return edge_inx, edge_attr
 
 
-def calculate_metrics(original, reconstructed):
-    mse = np.mean((original - reconstructed) ** 2)
-
-    if mse == 0:
-        psnr = float('inf')
-    else:
-        psnr = 20 * np.log10(1.0 / np.sqrt(mse))
-
-    ssim_value = ssim(original, reconstructed, data_range=reconstructed.max() - reconstructed.min())
-
-    return mse, psnr, ssim_value
-
-
 class MaskGenerator3D:
     def __init__(self, input_size=(160, 192, 160), mask_patch_size=(32, 32, 32), mask_ratio=0.6):
         self.input_size = input_size  # Input size of the 3D image (depth, height, width)
@@ -182,10 +161,3 @@ class MaskGenerator3D:
         mask_expanded = mask.repeat(self.mask_patch_size[0], axis=0).repeat(self.mask_patch_size[1], axis=1).repeat(self.mask_patch_size[2], axis=2)
 
         return mask_expanded
-
-def save_image(img, ref_img, result_path):
-    img = sitk.GetImageFromArray(img[0, 0, ...].cpu().detach().numpy())
-    img.SetOrigin(ref_img.GetOrigin())
-    img.SetDirection(ref_img.GetDirection())
-    img.SetSpacing(ref_img.GetSpacing())
-    sitk.WriteImage(img, result_path)
